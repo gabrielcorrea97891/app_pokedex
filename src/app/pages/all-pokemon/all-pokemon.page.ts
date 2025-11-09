@@ -23,14 +23,16 @@ export class AllPokemonPage implements OnInit, OnDestroy {
 
   pokemon: PokemonListItem[] = [];
   filteredPokemon: PokemonListItem[] = [];
-  offset: number = 0;
-  limit: number = 50;
+  currentPage: number = 1;
+  itemsPerPage: number = 50;
+  totalItems: number = 1302;
+  totalPages: number = 0;
   isLoading: boolean = false;
-  hasMore: boolean = true;
   searchTerm: string = '';
   private destroy$ = new Subject<void>();
 
   ngOnInit() {
+    this.calculateTotalPages();
     this.loadPokemon();
   }
 
@@ -39,16 +41,19 @@ export class AllPokemonPage implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  loadPokemon(event?: any) {
+  calculateTotalPages() {
+    this.totalPages = Math.ceil(this.totalItems / this.itemsPerPage);
+  }
+
+  loadPokemon() {
     if (this.isLoading) return;
 
     this.isLoading = true;
+    const offset = (this.currentPage - 1) * this.itemsPerPage;
     
-    this.pokemonService.getPokemonList(this.offset, this.limit).subscribe({
+    this.pokemonService.getPokemonList(offset, this.itemsPerPage).subscribe({
       next: (newPokemon) => {
         if (newPokemon.length === 0) {
-          this.hasMore = false;
-          if (event) event.target.complete();
           this.isLoading = false;
           return;
         }
@@ -64,37 +69,63 @@ export class AllPokemonPage implements OnInit, OnDestroy {
               types: pokemonDetails[index].types
             }));
 
-            this.pokemon = [...this.pokemon, ...enhancedPokemon];
+            this.pokemon = enhancedPokemon;
             this.filteredPokemon = [...this.pokemon]; 
-            this.offset += this.limit;
-            this.hasMore = newPokemon.length === this.limit;
             this.isLoading = false;
-            
-            if (event) {
-              event.target.complete();
-            }
           },
           error: (error) => {
             console.error('Error loading Pokémon details:', error);
             this.isLoading = false;
-            if (event) {
-              event.target.complete();
-            }
           }
         });
       },
       error: (error) => {
         console.error('Error loading Pokémon:', error);
         this.isLoading = false;
-        if (event) {
-          event.target.complete();
-        }
       }
     });
   }
 
-  loadMore(event: any) {
-    this.loadPokemon(event);
+  goToPage(page: number) {
+    if (page < 1 || page > this.totalPages || page === this.currentPage) return;
+    
+    this.currentPage = page;
+    this.loadPokemon();
+    
+    const content = document.querySelector('ion-content');
+    if (content) {
+      content.scrollToTop(500);
+    }
+  }
+
+  nextPage() {
+    if (this.currentPage < this.totalPages) {
+      this.goToPage(this.currentPage + 1);
+    }
+  }
+
+  previousPage() {
+    if (this.currentPage > 1) {
+      this.goToPage(this.currentPage - 1);
+    }
+  }
+
+  getPageNumbers(): number[] {
+    const pages: number[] = [];
+    const maxVisiblePages = 5;
+    
+    let startPage = Math.max(1, this.currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(this.totalPages, startPage + maxVisiblePages - 1);
+    
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+    
+    return pages;
   }
 
   onSearchChange(event: any) {
@@ -170,4 +201,11 @@ export class AllPokemonPage implements OnInit, OnDestroy {
     this.searchTerm = '';
     this.filteredPokemon = [...this.pokemon];
   }
+  onPageJump(event: any) {
+  const page = parseInt(event.detail.value, 10);
+  if (page && page >= 1 && page <= this.totalPages) {
+    this.goToPage(page);
+  }
+  event.target.value = '';
+}
 }

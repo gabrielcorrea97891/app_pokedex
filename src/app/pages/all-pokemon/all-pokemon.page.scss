@@ -4,11 +4,16 @@
 
 .search-bar {
   padding: 8px 16px;
-  background: transparent;
-  
-  .searchbar-input-container {
-    border-radius: 20px;
-  }
+  --background: white;
+  --border-radius: 12px;
+  --box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin: 8px 16px;
+}
+
+.page-info {
+  text-align: center;
+  padding: 8px 16px;
+  font-size: 14px;
 }
 
 .pokemon-card {
@@ -99,6 +104,100 @@
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
 }
 
+.pagination-container {
+  margin: 24px 16px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.pagination-toolbar {
+  --background: transparent;
+  --border-width: 0;
+  padding: 16px;
+}
+
+.pagination-btn {
+  --border-radius: 20px;
+  --padding-start: 16px;
+  --padding-end: 16px;
+  font-weight: 600;
+}
+
+.page-numbers {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.page-btn {
+  --border-radius: 12px;
+  --padding-start: 12px;
+  --padding-end: 12px;
+  min-width: 44px;
+  height: 44px;
+  font-weight: 600;
+}
+
+.ellipsis {
+  padding: 0 8px;
+  font-weight: bold;
+}
+
+.page-jump {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+
+  ion-text {
+    font-size: 14px;
+    font-weight: 500;
+  }
+}
+
+.page-input {
+  --background: white;
+  --border-radius: 8px;
+  --padding-start: 12px;
+  --padding-end: 12px;
+  --padding-top: 8px;
+  --padding-bottom: 8px;
+  width: 80px;
+  text-align: center;
+  font-weight: 600;
+
+  input {
+    text-align: center;
+  }
+}
+
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 16px;
+  color: #666;
+
+  ion-spinner {
+    margin-bottom: 16px;
+  }
+
+  p {
+    margin: 0;
+    font-size: 16px;
+  }
+}
+
+
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -106,6 +205,8 @@
   justify-content: center;
   height: 50vh;
   color: #666;
+  text-align: center;
+  padding: 0 16px;
 
   .empty-icon {
     font-size: 64px;
@@ -115,16 +216,65 @@
 
   p {
     font-size: 18px;
-    margin: 0;
+    margin: 0 0 8px 0;
   }
 
   .search-hint {
     font-size: 14px;
-    color: #888;
-    margin-top: 8px;
+    opacity: 0.7;
   }
 }
 
-ion-infinite-scroll {
-  margin-top: 16px;
+@media (max-width: 768px) {
+  .page-numbers {
+    gap: 4px;
+  }
+
+  .page-btn {
+    --padding-start: 8px;
+    --padding-end: 8px;
+    min-width: 40px;
+    height: 40px;
+    font-size: 14px;
+  }
+
+  .pagination-btn {
+    --padding-start: 12px;
+    --padding-end: 12px;
+    font-size: 14px;
+  }
+
+  .page-jump {
+    flex-direction: column;
+    gap: 8px;
+    
+    ion-text {
+      font-size: 13px;
+    }
+  }
+
+  .page-input {
+    width: 60px;
+  }
+}
+
+@media (max-width: 480px) {
+  .pagination-toolbar {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .page-numbers {
+    order: 1;
+  }
+
+  ion-buttons[slot="start"],
+  ion-buttons[slot="end"] {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .pagination-btn {
+    width: 120px;
+  }
 }
