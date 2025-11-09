@@ -3,11 +3,11 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { FavoritesService } from '../../services/favorites.service';
 import { PokemonService } from '../../services/pokemon.service';
-import { Pokemon, PokemonListItem } from '../../models/pokemon.model';
+import { Pokemon } from '../../models/pokemon.model';
 import { IonicModule } from '@ionic/angular';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { forkJoin, map } from 'rxjs';
+import { forkJoin, map, Subscription } from 'rxjs';
 
 interface PokemonForm {
   id: number;
@@ -40,6 +40,7 @@ export class PokemonDetailPage implements OnInit, OnDestroy {
   evolutionChain: any[] = [];
   levelUpMoves: any[] = [];
   
+  // Forms properties
   megaEvolutions: PokemonForm[] = [];
   gigantamaxForms: PokemonForm[] = [];
   regionalForms: PokemonForm[] = [];
@@ -53,15 +54,24 @@ export class PokemonDetailPage implements OnInit, OnDestroy {
   spriteTypes = [
     { key: 'front_default', label: 'Normal' },
     { key: 'front_shiny', label: 'Shiny' },
-    { key: 'back_default', label: 'Trás' },
-    { key: 'back_shiny', label: 'Trás Shiny' }
+    { key: 'back_default', label: 'Back' },
+    { key: 'back_shiny', label: 'Back Shiny' }
   ];
+
+  private favoritesSubscription!: Subscription;
 
   ngOnInit() {
     const pokemonId = this.activatedRoute.snapshot.paramMap.get('id');
     if (pokemonId) {
       this.loadPokemonDetails(+pokemonId);
     }
+
+    // Subscribe to favorites changes to keep the UI in sync
+    this.favoritesSubscription = this.favoritesService.favorites$.subscribe(() => {
+      if (this.pokemon) {
+        this.isFavorite = this.favoritesService.isFavorite(this.pokemon.id);
+      }
+    });
   }
 
   loadPokemonDetails(id: number) {
@@ -73,12 +83,15 @@ export class PokemonDetailPage implements OnInit, OnDestroy {
         this.isFavorite = this.favoritesService.isFavorite(id);
         this.isLoading = false;
         
+        // Load evolution chain if available
         if (this.pokemon.evolution_chain) {
           this.loadEvolutionChain(this.pokemon.evolution_chain.url);
         }
         
+        // Get level-up moves
         this.levelUpMoves = this.pokemonService.getMovesByLevelUp(this.pokemon);
 
+        // Load special forms for base Pokémon only (not for forms themselves)
         if (this.isBaseForm()) {
           this.loadSpecialForms(id);
         }
@@ -86,12 +99,14 @@ export class PokemonDetailPage implements OnInit, OnDestroy {
       error: (error: any) => {
         console.error('Error loading Pokémon details:', error);
         this.isLoading = false;
+        // Try alternative approach for special forms
         this.tryAlternativeLoad(id);
       }
     });
   }
 
   private tryAlternativeLoad(id: number) {
+    // Direct API call as fallback
     this.http.get<any>(`https://pokeapi.co/api/v2/pokemon/${id}`).subscribe({
       next: (pokemonData: any) => {
         const transformedPokemon: Pokemon = {
@@ -106,9 +121,9 @@ export class PokemonDetailPage implements OnInit, OnDestroy {
           abilities: pokemonData.abilities,
           species: pokemonData.species,
           moves: pokemonData.moves,
-          description: 'Forma Especial',
-          habitat: 'Desconhecido',
-          growth_rate: 'Desconhecido',
+          description: 'Special form Pokémon',
+          habitat: 'Unknown',
+          growth_rate: 'Unknown',
           base_happiness: 0,
           capture_rate: 0,
           sprites: pokemonData.sprites,
@@ -132,7 +147,7 @@ export class PokemonDetailPage implements OnInit, OnDestroy {
   private isBaseForm(): boolean {
     if (!this.pokemon) return false;
     
-
+    // Check if this is a base form (not a mega, gmax, etc.)
     const formName = this.pokemon.name.toLowerCase();
     return !formName.includes('-mega') && 
            !formName.includes('-gmax') && 
@@ -147,7 +162,7 @@ export class PokemonDetailPage implements OnInit, OnDestroy {
       next: (speciesData: any) => {
         const varieties = speciesData.varieties || [];
         
-
+        // Filter out the default form and get special forms
         const specialForms = varieties.filter((variety: any) => 
           !variety.is_default
         );
@@ -194,6 +209,7 @@ export class PokemonDetailPage implements OnInit, OnDestroy {
   }
 
   categorizeForms(forms: any[]) {
+    // Clear previous forms
     this.megaEvolutions = [];
     this.gigantamaxForms = [];
     this.regionalForms = [];
@@ -230,9 +246,11 @@ export class PokemonDetailPage implements OnInit, OnDestroy {
 
     const baseName = this.pokemon.name;
     let displayName = formName.replace(`${baseName}-`, '');
-
+    
+    // Replace hyphens with spaces and capitalize
     displayName = displayName.replace(/-/g, ' ');
-
+    
+    // Special formatting
     if (displayName.includes('mega')) {
       if (displayName.includes('x')) {
         return 'Mega X';
@@ -244,7 +262,8 @@ export class PokemonDetailPage implements OnInit, OnDestroy {
     } else if (displayName.includes('gmax')) {
       return 'Gigantamax';
     }
-
+    
+    // Capitalize first letter of each word
     return displayName.split(' ').map(word => 
       word.charAt(0).toUpperCase() + word.slice(1)
     ).join(' ');
@@ -339,11 +358,51 @@ export class PokemonDetailPage implements OnInit, OnDestroy {
     return spriteType ? spriteType.label : 'Normal';
   }
 
-  toggleFavorite() {
+  async toggleFavorite() {
     if (!this.pokemon) return;
 
+    const wasFavorite = this.isFavorite;
+    
+    const heartIcon = document.querySelector('.favorite-btn ion-icon');
+    if (heartIcon) {
+      heartIcon.classList.add('heart-pulse');
+      setTimeout(() => heartIcon.classList.remove('heart-pulse'), 500);
+    }
+
     this.favoritesService.toggleFavorite(this.pokemon.id);
-    this.isFavorite = !this.isFavorite;
+    
+
+    const toastMessage = wasFavorite 
+      ? `${this.pokemon.name} Removido dos Favoritos` 
+      : `❤️ ${this.pokemon.name} Adicionado aos favoritos!`;
+    
+    this.showFavoriteToast(toastMessage, wasFavorite ? 'warning' : 'success');
+  }
+
+  private async showFavoriteToast(message: string, color: 'success' | 'warning' = 'success') {
+    const toast = document.createElement('ion-toast');
+    toast.message = message;
+    toast.duration = 2000;
+    toast.position = 'bottom';
+    toast.color = color;
+    toast.buttons = [
+      {
+        text: 'Ver Favoritos',
+        handler: () => {
+          this.router.navigate(['/favorites']);
+        }
+      }
+    ];
+
+    document.body.appendChild(toast);
+    await toast.present();
+  }
+
+  goToFavorites(event?: Event) {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.router.navigate(['/favorites']);
   }
 
   segmentChanged(event: any) {
@@ -387,11 +446,11 @@ export class PokemonDetailPage implements OnInit, OnDestroy {
   getStatName(statName: string): string {
     const statNames: { [key: string]: string } = {
       'hp': 'HP',
-      'attack': 'Ataque',
-      'defense': 'Defesa',
-      'special-attack': 'Ataque Spe',
-      'special-defense': 'Defesa Spe',
-      'speed': 'Velocidade'
+      'attack': 'Attack',
+      'defense': 'Defense',
+      'special-attack': 'Sp. Atk',
+      'special-defense': 'Sp. Def',
+      'speed': 'Speed'
     };
     
     return statNames[statName] || statName;
@@ -407,6 +466,9 @@ export class PokemonDetailPage implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    if (this.favoritesSubscription) {
+      this.favoritesSubscription.unsubscribe();
+    }
     this.stopCry();
   }
 }

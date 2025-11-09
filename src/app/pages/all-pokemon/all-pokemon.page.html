@@ -23,6 +23,13 @@
     class="search-bar"
   ></ion-searchbar>
 
+  <div class="page-info" *ngIf="!searchTerm">
+    <ion-text color="medium">
+      Página {{ currentPage }} de {{ totalPages }} • 
+      Mostrando {{ itemsPerPage }} pokémon por página
+    </ion-text>
+  </div>
+
   <ion-grid>
     <ion-row>
       <ion-col 
@@ -74,16 +81,85 @@
     </ion-row>
   </ion-grid>
 
-  <ion-infinite-scroll (ionInfinite)="loadMore($event)" [disabled]="!hasMore || searchTerm.length > 0">
-    <ion-infinite-scroll-content
-      loadingSpinner="bubbles"
-      loadingText="Loading more Pokémon...">
-    </ion-infinite-scroll-content>
-  </ion-infinite-scroll>
+  <div class="pagination-container" *ngIf="!searchTerm && totalPages > 1">
+    <ion-toolbar class="pagination-toolbar">
+      <ion-buttons slot="start">
+        <ion-button 
+          (click)="previousPage()" 
+          [disabled]="currentPage === 1"
+          fill="outline"
+          class="pagination-btn"
+        >
+          <ion-icon slot="start" name="chevron-back"></ion-icon>
+          Anterior
+        </ion-button>
+      </ion-buttons>
+
+      <div class="page-numbers">
+        <ion-button 
+          *ngFor="let page of getPageNumbers()" 
+          (click)="goToPage(page)"
+          [fill]="page === currentPage ? 'solid' : 'outline'"
+          [color]="page === currentPage ? 'primary' : 'medium'"
+          class="page-btn"
+        >
+          {{ page }}
+        </ion-button>
+        
+        <ion-text *ngIf="getPageNumbers()[0] > 1" color="medium" class="ellipsis">
+          ...
+        </ion-text>
+        
+        <ion-text *ngIf="getPageNumbers()[getPageNumbers().length - 1] < totalPages" color="medium" class="ellipsis">
+          ...
+        </ion-text>
+        
+        <ion-button 
+          *ngIf="getPageNumbers()[getPageNumbers().length - 1] < totalPages"
+          (click)="goToPage(totalPages)"
+          [fill]="totalPages === currentPage ? 'solid' : 'outline'"
+          [color]="totalPages === currentPage ? 'primary' : 'medium'"
+          class="page-btn"
+        >
+          {{ totalPages }}
+        </ion-button>
+      </div>
+
+      <ion-buttons slot="end">
+        <ion-button 
+          (click)="nextPage()" 
+          [disabled]="currentPage === totalPages"
+          fill="outline"
+          class="pagination-btn"
+        >
+          Próxima
+          <ion-icon slot="end" name="chevron-forward"></ion-icon>
+        </ion-button>
+      </ion-buttons>
+    </ion-toolbar>
+
+    <div class="page-jump">
+      <ion-text color="medium">Ir para página:</ion-text>
+      <ion-input 
+        type="number" 
+        [min]="1" 
+        [max]="totalPages"
+        placeholder="{{ currentPage }}"
+        (ionChange)="onPageJump($event)"
+        class="page-input"
+      ></ion-input>
+    </div>
+  </div>
+
+  <div *ngIf="isLoading" class="loading-state">
+    <ion-spinner name="crescent"></ion-spinner>
+    <p>Carregando Pokémon...</p>
+  </div>
 
   <div *ngIf="filteredPokemon.length === 0 && !isLoading" class="empty-state">
     <ion-icon name="search-outline" class="empty-icon"></ion-icon>
     <p>Nenhum pokémon encontrado</p>
     <p *ngIf="searchTerm" class="search-hint">Tente ajustar os termos de pesquisa</p>
+    <p *ngIf="!searchTerm" class="search-hint">Não há Pokémon nesta página</p>
   </div>
 </ion-content>
