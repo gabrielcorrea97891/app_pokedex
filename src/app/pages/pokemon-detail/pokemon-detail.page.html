@@ -1,0 +1,136 @@
+<ion-header [translucent]="true">
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-button (click)="goBack()">
+        <ion-icon slot="icon-only" name="arrow-back"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title *ngIf="pokemon">
+      {{ pokemon.name | titlecase }}
+    </ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="toggleFavorite()" [color]="isFavorite ? 'danger' : 'medium'">
+        <ion-icon slot="icon-only" [name]="isFavorite ? 'heart' : 'heart-outline'"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="pokedex-background">
+
+  <div *ngIf="isLoading" class="loading-container">
+    <ion-spinner name="crescent"></ion-spinner>
+    <p>Carregando...</p>
+  </div>
+
+
+  <div *ngIf="pokemon && !isLoading" class="pokemon-detail-container">
+
+    <div class="pokemon-header" [style.background]="getTypeColor(pokemon.types[0]) + '20'">
+      <div class="pokemon-number">#{{ pokemon.id | number: '3.0' }}</div>
+      <div class="pokemon-image-large">
+        <img [src]="pokemon.image" [alt]="pokemon.name" loading="eager">
+      </div>
+      <h1 class="pokemon-name-large">{{ pokemon.name | titlecase }}</h1>
+ 
+      <div class="pokemon-types-large">
+        <ion-badge 
+          *ngFor="let type of pokemon.types" 
+          [style.background]="getTypeColor(type)"
+          class="type-badge-large"
+        >
+          {{ type | titlecase }}
+        </ion-badge>
+      </div>
+    </div>
+
+    <ion-segment [value]="activeSegment" (ionChange)="segmentChanged($event)" class="detail-segment">
+      <ion-segment-button value="about">
+        <ion-label>Sobre</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="stats">
+        <ion-label>Stats</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="abilities">
+        <ion-label>Habilidades</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+
+    <div *ngIf="activeSegment === 'about'" class="segment-content">
+      <ion-card class="info-card">
+        <ion-card-header>
+          <ion-card-title>Pokédex</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <div class="info-row">
+            <span class="info-label">Especie</span>
+            <span class="info-value">{{ pokemon.species.name | titlecase }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Altura</span>
+            <span class="info-value">{{ pokemon.height }} m</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Peso</span>
+            <span class="info-value">{{ pokemon.weight }} kg</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Tipos</span>
+            <span class="info-value">
+              <ion-badge 
+                *ngFor="let type of pokemon.types" 
+                [style.background]="getTypeColor(type)"
+                class="type-badge-small"
+              >
+                {{ type | titlecase }}
+              </ion-badge>
+            </span>
+          </div>
+        </ion-card-content>
+      </ion-card>
+    </div>
+
+    <div *ngIf="activeSegment === 'stats'" class="segment-content">
+      <ion-card class="info-card">
+        <ion-card-header>
+          <ion-card-title>Stats Base</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <div *ngFor="let stat of pokemon.stats" class="stat-row">
+            <span class="stat-label">{{ getStatName(stat.stat.name) }}</span>
+            <span class="stat-value">{{ stat.base_stat }}</span>
+            <div class="stat-bar-container">
+              <div 
+                class="stat-bar" 
+                [style.width.%]="getStatPercentage(stat.base_stat)"
+                [style.background]="getTypeColor(pokemon.types[0])"
+              ></div>
+            </div>
+          </div>
+          <div class="total-stats">
+            <span class="total-label">Total</span>
+            <span class="total-value">
+              {{ getTotalStats() }}
+            </span>
+          </div>
+        </ion-card-content>
+      </ion-card>
+    </div>
+
+    <div *ngIf="activeSegment === 'abilities'" class="segment-content">
+      <ion-card class="info-card">
+        <ion-card-header>
+          <ion-card-title>Habilidades</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <div *ngFor="let ability of pokemon.abilities" class="ability-row">
+            <span class="ability-name">{{ ability.ability.name | titlecase }}</span>
+            <ion-badge *ngIf="ability.is_hidden" color="warning" class="hidden-badge">
+              Hidden
+            </ion-badge>
+          </div>
+        </ion-card-content>
+      </ion-card>
+    </div>
+  </div>
+</ion-content>

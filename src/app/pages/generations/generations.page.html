@@ -1,0 +1,62 @@
+<ion-header [translucent]="true">
+  <ion-toolbar color="primary">
+    <ion-title>
+      <ion-icon name="layers" class="ion-margin-end"></ion-icon>
+      Generacoes
+    </ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="pokedex-background">
+  <ion-header collapse="condense">
+    <ion-toolbar color="primary">
+      <ion-title size="large">Generacoes</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <ion-segment [value]="selectedGeneration" (ionChange)="onGenerationChange($event)" class="generation-segment">
+    <ion-segment-button *ngFor="let gen of generations" [value]="gen.id">
+      <ion-label>{{ gen.name }}</ion-label>
+    </ion-segment-button>
+  </ion-segment>
+
+  <div *ngIf="isLoading" class="loading-container">
+    <ion-spinner name="crescent"></ion-spinner>
+    <p>Carregando Pokémon...</p>
+  </div>
+
+  <ion-grid *ngIf="!isLoading">
+    <ion-row>
+      <ion-col 
+        size="6" 
+        size-md="4" 
+        size-lg="3" 
+        *ngFor="let poke of pokemon"
+        (click)="viewPokemonDetails(poke)"
+      >
+        <ion-card class="pokemon-card">
+          <div class="pokemon-number">#{{ poke.pokeIndex | number: '3.0' }}</div>
+          <div class="pokemon-image-container">
+            <img 
+              [src]="poke.image" 
+              [alt]="poke.name"
+              class="pokemon-image"
+              loading="lazy"
+            >
+          </div>
+          
+          <ion-card-header>
+            <ion-card-title class="pokemon-name">
+              {{ poke.name | titlecase }}
+            </ion-card-title>
+          </ion-card-header>
+        </ion-card>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+
+  <div *ngIf="pokemon.length === 0 && !isLoading" class="empty-state">
+    <ion-icon name="layers-outline" class="empty-icon"></ion-icon>
+    <p>Nenhum pokemon encontrado</p>
+  </div>
+</ion-content>

@@ -1,3 +1,21 @@
 <ion-app>
+  <ion-header *ngIf="showTabs">
+    <ion-toolbar color="primary">
+      <ion-title>Pokédex</ion-title>
+      <ion-buttons slot="start">
+        <ion-button [routerLink]="['/']" routerDirection="root">
+          <ion-icon name="list" slot="icon-only"></ion-icon>
+        </ion-button>
+      </ion-buttons>
+      <ion-buttons slot="end">
+        <ion-button [routerLink]="['/generations']" routerDirection="forward">
+          <ion-icon name="layers" slot="icon-only"></ion-icon>
+        </ion-button>
+        <ion-button [routerLink]="['/favorites']" routerDirection="forward">
+          <ion-icon name="heart" slot="icon-only"></ion-icon>
+        </ion-button>
+      </ion-buttons>
+    </ion-toolbar>
+  </ion-header>
   <ion-router-outlet></ion-router-outlet>
 </ion-app>

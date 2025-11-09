@@ -52,7 +52,7 @@ export class PokemonService {
 
     const range = ranges[generation];
     if (!range) {
-      throw new Error(`Generation ${generation} not supported`);
+      throw new Error(`Generacao ${generation} sem suporte`);
     }
 
     const count = range.end - range.start + 1;
@@ -66,8 +66,8 @@ export class PokemonService {
       url: `${this.baseUrl}/${poke.id}`,
       image: `${this.imageUrl}${poke.id}.png`,
       types: poke.types.map((t: any) => t.type.name),
-      height: poke.height / 10, // Convert to meters
-      weight: poke.weight / 10, // Convert to kilograms
+      height: poke.height / 10, 
+      weight: poke.weight / 10, 
       stats: poke.stats,
       abilities: poke.abilities,
       species: poke.species

@@ -1,14 +1,10 @@
 import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { PokemonService } from './pokemon.service';
-import { Pokemon } from '../models/pokemon.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class FavoritesService {
-  private pokemonService = inject(PokemonService);
-  
   private favoritesKey = 'pokedex_favorites';
   private favoritesSubject = new BehaviorSubject<number[]>(this.getFavoritesFromStorage());
   
