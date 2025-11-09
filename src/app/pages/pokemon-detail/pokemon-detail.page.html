@@ -9,27 +9,33 @@
       {{ pokemon.name | titlecase }}
     </ion-title>
     <ion-buttons slot="end">
-      <ion-button (click)="toggleFavorite()" [color]="isFavorite ? 'danger' : 'medium'" class="favorite-btn">
-        <ion-icon slot="icon-only" [name]="isFavorite ? 'heart' : 'heart-outline'"></ion-icon>
+      <ion-button 
+        (click)="toggleFavorite()" 
+        [color]="isFavorite ? 'danger' : 'medium'" 
+        class="favorite-btn"
+        [title]="isFavorite ? 'Remove from favorites' : 'Add to favorites'"
+      >
+        <ion-icon 
+          slot="icon-only" 
+          [name]="isFavorite ? 'heart' : 'heart-outline'"
+          [size]="'large'">
+        </ion-icon>
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
 <ion-content [fullscreen]="true" class="pokedex-background">
-
+  <!-- Loading Spinner -->
   <div *ngIf="isLoading" class="loading-container">
     <ion-spinner name="crescent"></ion-spinner>
     <p>Loading Pokémon data...</p>
   </div>
 
-
   <div *ngIf="pokemon && !isLoading" class="pokemon-detail-container">
-
     <div class="pokemon-header" [style.background]="getTypeColor(pokemon.types[0]) + '20'">
       <div class="pokemon-number">#{{ pokemon.id | number: '3.0' }}</div>
       
-
       <div class="sprite-section">
         <div class="sprite-display">
           <img 
@@ -42,7 +48,7 @@
             <img [src]="pokemon.image" [alt]="pokemon.name" class="pokemon-image-large">
           </div>
         </div>
-
+        
         <div class="sprite-controls">
           <div class="sprite-buttons">
             <ion-button 
@@ -57,7 +63,6 @@
             </ion-button>
           </div>
           
-
           <ion-button 
             (click)="playCry()" 
             [disabled]="isPlayingCry || !pokemon.cries?.latest"
@@ -75,7 +80,6 @@
 
       <h1 class="pokemon-name-large">{{ pokemon.name | titlecase }}</h1>
       
-
       <div class="pokemon-types-large">
         <ion-badge 
           *ngFor="let type of pokemon.types" 
@@ -87,9 +91,21 @@
       </div>
 
 
-      <div class="favorite-status" [class.is-favorite]="isFavorite">
+      <div class="favorite-status" [class.is-favorite]="isFavorite" (click)="toggleFavorite()">
         <ion-icon [name]="isFavorite ? 'heart' : 'heart-outline'"></ion-icon>
-        <span>{{ isFavorite ? 'Adicionado aos Favoritos' : 'Adicionar aos Favoritos' }}</span>
+        <span>
+          {{ isFavorite ? '⭐ Fovorito!' : '✨ Clique para adicionar aos favoritos.' }}
+        </span>
+        <ion-button 
+          *ngIf="isFavorite" 
+          fill="clear" 
+          size="small" 
+          color="light" 
+          (click)="goToFavorites($event)"
+          class="view-favorites-btn"
+        >
+          Ver Todos
+        </ion-button>
       </div>
     </div>
 
@@ -104,22 +120,21 @@
         <ion-label>Evolução</ion-label>
       </ion-segment-button>
       <ion-segment-button value="moves">
-        <ion-label>Movimentos</ion-label>
+        <ion-label>Golpes</ion-label>
       </ion-segment-button>
       <ion-segment-button value="forms" *ngIf="hasSpecialForms">
         <ion-label>Formas</ion-label>
       </ion-segment-button>
     </ion-segment>
 
-
     <div *ngIf="activeSegment === 'about'" class="segment-content">
       <ion-card class="info-card">
         <ion-card-header>
-          <ion-card-title>Dados da Pokédex</ion-card-title>
+          <ion-card-title>Pokédex</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <div class="info-row">
-            <span class="info-label">Especie</span>
+            <span class="info-label">Espécies</span>
             <span class="info-value">{{ pokemon.species.name | titlecase }}</span>
           </div>
           <div class="info-row">
@@ -127,7 +142,7 @@
             <span class="info-value">{{ pokemon.height }} m</span>
           </div>
           <div class="info-row">
-            <span class="info-label">Largura</span>
+            <span class="info-label">Peso</span>
             <span class="info-value">{{ pokemon.weight }} kg</span>
           </div>
           <div class="info-row">
@@ -143,7 +158,7 @@
             </span>
           </div>
           <div class="info-row" *ngIf="pokemon.description">
-            <span class="info-label">Descricao</span>
+            <span class="info-label">Descrição</span>
             <span class="info-value description-text">{{ pokemon.description }}</span>
           </div>
           <div class="info-row" *ngIf="pokemon.habitat">
@@ -151,7 +166,7 @@
             <span class="info-value">{{ pokemon.habitat | titlecase }}</span>
           </div>
           <div class="info-row" *ngIf="pokemon.base_happiness">
-            <span class="info-label">Felicidade Base</span>
+            <span class="info-label">Velicidade Base</span>
             <span class="info-value">{{ pokemon.base_happiness }}</span>
           </div>
           <div class="info-row" *ngIf="pokemon.capture_rate">
@@ -161,7 +176,6 @@
         </ion-card-content>
       </ion-card>
     </div>
-
 
     <div *ngIf="activeSegment === 'stats'" class="segment-content">
       <ion-card class="info-card">
@@ -197,7 +211,7 @@
         </ion-card-header>
         <ion-card-content>
           <div *ngIf="evolutionChain.length === 0" class="empty-evolution">
-            <p>Este pokémon não evolue.</p>
+            <p>Este pokémon não evoluí.</p>
           </div>
           <div *ngIf="evolutionChain.length > 0" class="evolution-chain">
             <div 
@@ -221,11 +235,11 @@
     <div *ngIf="activeSegment === 'moves'" class="segment-content">
       <ion-card class="info-card">
         <ion-card-header>
-          <ion-card-title>Movimentos de Nível</ion-card-title>
+          <ion-card-title>Golpes por Subida de Nível</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <div *ngIf="levelUpMoves.length === 0" class="empty-moves">
-            <p>Este Pokémon não aprende golpes subindo de nível..</p>
+            <p>Este pokémon não aprende nenhum golpe ao subir de nível.</p>
           </div>
           <div *ngIf="levelUpMoves.length > 0" class="moves-list">
             <div *ngFor="let move of levelUpMoves" class="move-row">
@@ -237,7 +251,6 @@
       </ion-card>
     </div>
 
-
     <div *ngIf="activeSegment === 'forms' && hasSpecialForms" class="segment-content">
       <ion-card class="info-card">
         <ion-card-header>
@@ -245,10 +258,11 @@
         </ion-card-header>
         <ion-card-content>
           
+
           <div *ngIf="megaEvolutions.length > 0" class="forms-section">
             <h3 class="forms-section-title">
               <ion-icon name="diamond" color="primary"></ion-icon>
-              Mega Evolucoes
+              Mega Evoluções
             </h3>
             <div class="forms-grid">
               <div 
@@ -260,7 +274,7 @@
                   <img 
                     [src]="form.sprites?.front_default || form.sprites?.other?.['official-artwork']?.front_default || form.image" 
                     [alt]="form.name"
-                    (error)="form.image = pokemon.image"
+                    (error)="form.image = pokemon!.image"
                   >
                 </div>
                 <div class="form-name">{{ getFormDisplayName(form.name) | titlecase }}</div>
@@ -278,7 +292,6 @@
             </div>
           </div>
 
-      
           <div *ngIf="gigantamaxForms.length > 0" class="forms-section">
             <h3 class="forms-section-title">
               <ion-icon name="expand" color="danger"></ion-icon>
@@ -294,7 +307,7 @@
                   <img 
                     [src]="form.sprites?.front_default || form.sprites?.other?.['official-artwork']?.front_default || form.image" 
                     [alt]="form.name"
-                    (error)="form.image = pokemon.image"
+                    (error)="form.image = pokemon!.image"
                   >
                 </div>
                 <div class="form-name">{{ getFormDisplayName(form.name) | titlecase }}</div>
@@ -312,7 +325,6 @@
             </div>
           </div>
 
-        
           <div *ngIf="regionalForms.length > 0" class="forms-section">
             <h3 class="forms-section-title">
               <ion-icon name="location" color="success"></ion-icon>
@@ -328,7 +340,7 @@
                   <img 
                     [src]="form.sprites?.front_default || form.sprites?.other?.['official-artwork']?.front_default || form.image" 
                     [alt]="form.name"
-                    (error)="form.image = pokemon.image"
+                    (error)="form.image = pokemon!.image"
                   >
                 </div>
                 <div class="form-name">{{ getFormDisplayName(form.name) | titlecase }}</div>
@@ -346,11 +358,11 @@
             </div>
           </div>
 
-
+          <!-- Other Forms -->
           <div *ngIf="otherForms.length > 0" class="forms-section">
             <h3 class="forms-section-title">
               <ion-icon name="options" color="medium"></ion-icon>
-              Outras Formas
+              Other Forms
             </h3>
             <div class="forms-grid">
               <div 
@@ -362,7 +374,7 @@
                   <img 
                     [src]="form.sprites?.front_default || form.sprites?.other?.['official-artwork']?.front_default || form.image" 
                     [alt]="form.name"
-                    (error)="form.image = pokemon.image"
+                    (error)="form.image = pokemon!.image"
                   >
                 </div>
                 <div class="form-name">{{ getFormDisplayName(form.name) | titlecase }}</div>
