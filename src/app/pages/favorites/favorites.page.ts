@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subscription, Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { FavoritesService } from '../../services/favorites.service';
 import { PokemonService } from '../../services/pokemon.service';
 import { Pokemon } from '../../models/pokemon.model';
@@ -22,20 +23,21 @@ export class FavoritesPage implements OnInit, OnDestroy {
 
   favoritePokemon: Pokemon[] = [];
   isLoading: boolean = false;
-  private favoritesSubscription!: Subscription;
+  private destroy$ = new Subject<void>();
 
   ngOnInit() {
     this.loadFavorites();
     
-    this.favoritesSubscription = this.favoritesService.favorites$.subscribe(() => {
-      this.loadFavorites();
-    });
+    this.favoritesService.favorites$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.loadFavorites();
+      });
   }
 
   ngOnDestroy() {
-    if (this.favoritesSubscription) {
-      this.favoritesSubscription.unsubscribe();
-    }
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   loadFavorites() {
@@ -43,6 +45,7 @@ export class FavoritesPage implements OnInit, OnDestroy {
     
     if (favoriteIds.length === 0) {
       this.favoritePokemon = [];
+      this.isLoading = false;
       return;
     }
 

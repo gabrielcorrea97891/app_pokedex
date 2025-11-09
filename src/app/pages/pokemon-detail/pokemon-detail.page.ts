@@ -1,11 +1,23 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import { FavoritesService } from '../../services/favorites.service';
 import { PokemonService } from '../../services/pokemon.service';
-import { Pokemon } from '../../models/pokemon.model';
+import { Pokemon, PokemonListItem } from '../../models/pokemon.model';
 import { IonicModule } from '@ionic/angular';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { forkJoin, map } from 'rxjs';
+
+interface PokemonForm {
+  id: number;
+  name: string;
+  types: string[];
+  sprites: any;
+  image: string;
+  is_default: boolean;
+  form_name: string;
+}
 
 @Component({
   selector: 'app-pokemon-detail',
@@ -14,16 +26,36 @@ import { FormsModule } from '@angular/forms';
   standalone: true,
   imports: [IonicModule, CommonModule, FormsModule]
 })
-export class PokemonDetailPage implements OnInit {
+export class PokemonDetailPage implements OnInit, OnDestroy {
   private activatedRoute = inject(ActivatedRoute);
   private router = inject(Router);
   private favoritesService = inject(FavoritesService);
   private pokemonService = inject(PokemonService);
+  private http = inject(HttpClient);
 
   pokemon: Pokemon | null = null;
   isLoading: boolean = false;
   isFavorite: boolean = false;
   activeSegment: string = 'about';
+  evolutionChain: any[] = [];
+  levelUpMoves: any[] = [];
+  
+  megaEvolutions: PokemonForm[] = [];
+  gigantamaxForms: PokemonForm[] = [];
+  regionalForms: PokemonForm[] = [];
+  otherForms: PokemonForm[] = [];
+  hasSpecialForms: boolean = false;
+
+  selectedSprite: string = 'front_default';
+  isPlayingCry: boolean = false;
+  audio: HTMLAudioElement | null = null;
+
+  spriteTypes = [
+    { key: 'front_default', label: 'Normal' },
+    { key: 'front_shiny', label: 'Shiny' },
+    { key: 'back_default', label: 'Trás' },
+    { key: 'back_shiny', label: 'Trás Shiny' }
+  ];
 
   ngOnInit() {
     const pokemonId = this.activatedRoute.snapshot.paramMap.get('id');
@@ -40,12 +72,271 @@ export class PokemonDetailPage implements OnInit {
         this.pokemon = pokemonData;
         this.isFavorite = this.favoritesService.isFavorite(id);
         this.isLoading = false;
+        
+        if (this.pokemon.evolution_chain) {
+          this.loadEvolutionChain(this.pokemon.evolution_chain.url);
+        }
+        
+        this.levelUpMoves = this.pokemonService.getMovesByLevelUp(this.pokemon);
+
+        if (this.isBaseForm()) {
+          this.loadSpecialForms(id);
+        }
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Error loading Pokémon details:', error);
+        this.isLoading = false;
+        this.tryAlternativeLoad(id);
+      }
+    });
+  }
+
+  private tryAlternativeLoad(id: number) {
+    this.http.get<any>(`https://pokeapi.co/api/v2/pokemon/${id}`).subscribe({
+      next: (pokemonData: any) => {
+        const transformedPokemon: Pokemon = {
+          id: pokemonData.id,
+          name: pokemonData.name,
+          url: `https://pokeapi.co/api/v2/pokemon/${pokemonData.id}`,
+          image: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemonData.id}.png`,
+          types: pokemonData.types.map((t: any) => t.type.name),
+          height: pokemonData.height / 10,
+          weight: pokemonData.weight / 10,
+          stats: pokemonData.stats,
+          abilities: pokemonData.abilities,
+          species: pokemonData.species,
+          moves: pokemonData.moves,
+          description: 'Forma Especial',
+          habitat: 'Desconhecido',
+          growth_rate: 'Desconhecido',
+          base_happiness: 0,
+          capture_rate: 0,
+          sprites: pokemonData.sprites,
+          cries: pokemonData.cries || { latest: '', legacy: '' },
+          forms: pokemonData.forms
+        };
+
+        this.pokemon = transformedPokemon;
+        this.isFavorite = this.favoritesService.isFavorite(id);
+        this.isLoading = false;
+        
+        this.levelUpMoves = this.pokemonService.getMovesByLevelUp(this.pokemon);
+      },
+      error: (error: any) => {
+        console.error('Error in alternative load:', error);
         this.isLoading = false;
       }
     });
+  }
+
+  private isBaseForm(): boolean {
+    if (!this.pokemon) return false;
+    
+
+    const formName = this.pokemon.name.toLowerCase();
+    return !formName.includes('-mega') && 
+           !formName.includes('-gmax') && 
+           !formName.includes('-alola') &&
+           !formName.includes('-galar') &&
+           !formName.includes('-hisui') &&
+           !formName.includes('-paldea');
+  }
+
+  loadSpecialForms(pokemonId: number) {
+    this.pokemonService.getPokemonSpecies(pokemonId).subscribe({
+      next: (speciesData: any) => {
+        const varieties = speciesData.varieties || [];
+        
+
+        const specialForms = varieties.filter((variety: any) => 
+          !variety.is_default
+        );
+
+        if (specialForms.length > 0) {
+          this.loadFormsDetails(specialForms.map((v: any) => v.pokemon.url));
+        }
+      },
+      error: (error: any) => {
+        console.error('Error loading Pokémon species:', error);
+      }
+    });
+  }
+
+  loadFormsDetails(formUrls: string[]) {
+    const formRequests = formUrls.map(url => 
+      this.http.get<any>(url).pipe(
+        map((formData: any) => ({
+          id: formData.id,
+          name: formData.name,
+          types: formData.types.map((t: any) => t.type.name),
+          sprites: formData.sprites,
+          image: formData.sprites?.other?.['official-artwork']?.front_default || 
+                 formData.sprites?.front_default ||
+                 `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${formData.id}.png`,
+          is_default: formData.is_default,
+          form_name: formData.form_name
+        }))
+      )
+    );
+    
+    forkJoin(formRequests).subscribe({
+      next: (formsData: any[]) => {
+        this.categorizeForms(formsData);
+        this.hasSpecialForms = this.megaEvolutions.length > 0 || 
+                              this.gigantamaxForms.length > 0 || 
+                              this.regionalForms.length > 0 ||
+                              this.otherForms.length > 0;
+      },
+      error: (error: any) => {
+        console.error('Error loading form details:', error);
+      }
+    });
+  }
+
+  categorizeForms(forms: any[]) {
+    this.megaEvolutions = [];
+    this.gigantamaxForms = [];
+    this.regionalForms = [];
+    this.otherForms = [];
+
+    forms.forEach((form: any) => {
+      if (this.isMegaEvolution(form.name)) {
+        this.megaEvolutions.push(form);
+      } else if (this.isGigantamaxForm(form.name)) {
+        this.gigantamaxForms.push(form);
+      } else if (this.isRegionalForm(form.name)) {
+        this.regionalForms.push(form);
+      } else {
+        this.otherForms.push(form);
+      }
+    });
+  }
+
+  isMegaEvolution(formName: string): boolean {
+    return formName.includes('-mega') || formName.includes('mega-');
+  }
+
+  isGigantamaxForm(formName: string): boolean {
+    return formName.includes('-gmax');
+  }
+
+  isRegionalForm(formName: string): boolean {
+    const regionalPatterns = ['alola', 'galar', 'hisui', 'paldea', 'alolan', 'galarian', 'hisuian', 'paldean'];
+    return regionalPatterns.some(pattern => formName.includes(pattern));
+  }
+
+  getFormDisplayName(formName: string): string {
+    if (!this.pokemon) return formName;
+
+    const baseName = this.pokemon.name;
+    let displayName = formName.replace(`${baseName}-`, '');
+
+    displayName = displayName.replace(/-/g, ' ');
+
+    if (displayName.includes('mega')) {
+      if (displayName.includes('x')) {
+        return 'Mega X';
+      } else if (displayName.includes('y')) {
+        return 'Mega Y';
+      } else {
+        return 'Mega';
+      }
+    } else if (displayName.includes('gmax')) {
+      return 'Gigantamax';
+    }
+
+    return displayName.split(' ').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ');
+  }
+
+  getRegionalName(formName: string): string {
+    if (formName.includes('alola')) return 'Alolan';
+    if (formName.includes('galar')) return 'Galarian';
+    if (formName.includes('hisui')) return 'Hisuian';
+    if (formName.includes('paldea')) return 'Paldean';
+    return 'Regional';
+  }
+
+  viewForm(form: PokemonForm) {
+    this.router.navigate(['/pokemon-detail', form.id]);
+  }
+
+  loadEvolutionChain(url: string) {
+    this.pokemonService.getEvolutionChain(url).subscribe({
+      next: (chainData: any) => {
+        this.evolutionChain = this.parseEvolutionChain(chainData.chain);
+      },
+      error: (error: any) => {
+        console.error('Error loading evolution chain:', error);
+      }
+    });
+  }
+
+  parseEvolutionChain(chain: any): any[] {
+    const evolutionChain = [];
+    let current = chain;
+    
+    while (current) {
+      const speciesId = this.getPokemonIdFromUrl(current.species.url);
+      evolutionChain.push({
+        name: current.species.name,
+        id: speciesId,
+        image: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${speciesId}.png`
+      });
+      
+      current = current.evolves_to && current.evolves_to.length > 0 ? current.evolves_to[0] : null;
+    }
+    
+    return evolutionChain;
+  }
+
+  getPokemonIdFromUrl(url: string): number {
+    const matches = url.match(/\/pokemon-species\/(\d+)\//);
+    return matches ? parseInt(matches[1], 10) : 0;
+  }
+
+  playCry() {
+    if (!this.pokemon?.cries?.latest || this.isPlayingCry) return;
+
+    this.isPlayingCry = true;
+    this.audio = new Audio(this.pokemon.cries.latest);
+    this.audio.play().catch((error: any) => {
+      console.error('Error playing Pokémon cry:', error);
+      this.isPlayingCry = false;
+    });
+
+    this.audio.onended = () => {
+      this.isPlayingCry = false;
+    };
+
+    this.audio.onerror = () => {
+      this.isPlayingCry = false;
+    };
+  }
+
+  stopCry() {
+    if (this.audio) {
+      this.audio.pause();
+      this.audio.currentTime = 0;
+      this.isPlayingCry = false;
+    }
+  }
+
+  selectSprite(spriteKey: string) {
+    this.selectedSprite = spriteKey;
+  }
+
+  getCurrentSprite(): string {
+    if (!this.pokemon?.sprites) return '';
+    
+    const sprite = this.pokemon.sprites[this.selectedSprite as keyof typeof this.pokemon.sprites];
+    return sprite || this.pokemon.sprites.front_default || this.pokemon.image || '';
+  }
+
+  getSpriteLabel(): string {
+    const spriteType = this.spriteTypes.find(s => s.key === this.selectedSprite);
+    return spriteType ? spriteType.label : 'Normal';
   }
 
   toggleFavorite() {
@@ -98,8 +389,8 @@ export class PokemonDetailPage implements OnInit {
       'hp': 'HP',
       'attack': 'Ataque',
       'defense': 'Defesa',
-      'special-attack': 'Sp. Atk',
-      'special-defense': 'Sp. Def',
+      'special-attack': 'Ataque Spe',
+      'special-defense': 'Defesa Spe',
       'speed': 'Velocidade'
     };
     
@@ -109,5 +400,13 @@ export class PokemonDetailPage implements OnInit {
   getTotalStats(): number {
     if (!this.pokemon) return 0;
     return this.pokemon.stats.reduce((total, stat) => total + stat.base_stat, 0);
+  }
+
+  viewEvolutionPokemon(pokemonId: number) {
+    this.router.navigate(['/pokemon-detail', pokemonId]);
+  }
+
+  ngOnDestroy() {
+    this.stopCry();
   }
 }

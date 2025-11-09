@@ -2,12 +2,34 @@
   --background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
 }
 
-.search-bar {
-  padding: 8px 16px;
-  background: transparent;
-  
-  .searchbar-input-container {
+.generation-info {
+  text-align: center;
+  padding: 20px 16px;
+  background: white;
+  margin: 16px;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+  h2 {
+    margin: 0 0 8px 0;
+    color: #333;
+    font-size: 24px;
+    font-weight: bold;
+  }
+
+  p {
+    margin: 0 0 12px 0;
+    color: #666;
+    font-size: 16px;
+  }
+
+  .pokemon-count {
+    background: var(--ion-color-primary);
+    color: white;
+    padding: 8px 16px;
     border-radius: 20px;
+    font-weight: bold;
+    display: inline-block;
   }
 }
 
@@ -18,7 +40,7 @@
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   cursor: pointer;
-  border: none;
+  background: white;
 
   &:hover {
     transform: translateY(-4px);
@@ -34,22 +56,18 @@
 }
 
 .pokemon-number {
-  background: rgba(0, 0, 0, 0.2);
+  background: var(--ion-color-primary);
   color: white;
   padding: 4px 8px;
   border-radius: 12px;
   font-size: 12px;
   font-weight: bold;
-  backdrop-filter: blur(10px);
 }
 
 .favorite-icon {
   font-size: 1.2em;
   z-index: 1;
   transition: color 0.3s ease;
-  backdrop-filter: blur(10px);
-  border-radius: 50%;
-  padding: 4px;
 }
 
 .pokemon-image-container {
@@ -79,7 +97,7 @@
   font-weight: bold;
   text-align: center;
   color: #333;
-  margin: 0 0 8px 0;
+  margin: 0;
 }
 
 .pokemon-types {
@@ -97,6 +115,23 @@
   color: white;
   font-weight: bold;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 50vh;
+  color: #666;
+
+  ion-spinner {
+    margin-bottom: 16px;
+  }
+
+  p {
+    margin: 0;
+  }
 }
 
 .empty-state {
@@ -117,14 +152,4 @@
     font-size: 18px;
     margin: 0;
   }
-
-  .search-hint {
-    font-size: 14px;
-    color: #888;
-    margin-top: 8px;
-  }
-}
-
-ion-infinite-scroll {
-  margin-top: 16px;
 }

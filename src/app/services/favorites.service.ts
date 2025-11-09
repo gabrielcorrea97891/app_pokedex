@@ -54,4 +54,8 @@ export class FavoritesService {
       this.addFavorite(pokemonId);
     }
   }
+
+  getFavoriteCount(): number {
+    return this.getFavoritesFromStorage().length;
+  }
 }

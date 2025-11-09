@@ -9,41 +9,32 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 @Component({
-  selector: 'app-generations',
-  templateUrl: './generations.page.html',
-  styleUrls: ['./generations.page.scss'],
+  selector: 'app-generation1',
+  templateUrl: './generation1.page.html',
+  styleUrls: ['./generation1.page.scss'],
   standalone: true,
   imports: [IonicModule, CommonModule, FormsModule]
 })
-export class GenerationsPage implements OnInit {
+export class Generation1Page implements OnInit {
   private pokemonService = inject(PokemonService);
   private router = inject(Router);
   private favoritesService = inject(FavoritesService);
 
-  selectedGeneration: number = 1;
   pokemon: PokemonListItem[] = [];
   isLoading: boolean = false;
-
-  generations = [
-    { id: 1, name: 'Generacao I', range: '1-151', region: 'Kanto' },
-    { id: 5, name: 'Generacao V', range: '494-649', region: 'Unova' }
-  ];
+  generation = { id: 1, name: 'Generacao I', range: '1-151', region: 'Kanto' };
 
   ngOnInit() {
-    this.loadGenerationPokemon(1);
+    this.loadGenerationPokemon();
   }
 
-  onGenerationChange(event: any) {
-    this.selectedGeneration = event.detail.value;
-    this.loadGenerationPokemon(this.selectedGeneration);
-  }
-
-  loadGenerationPokemon(generation: number) {
+  loadGenerationPokemon() {
     this.isLoading = true;
     this.pokemon = [];
 
-    this.pokemonService.getGenerationPokemon(generation).subscribe({
+    this.pokemonService.getGenerationPokemon(1).subscribe({
       next: (pokemonList) => {
+        // Load details for each Pokémon to get types
         const detailRequests = pokemonList.map(poke => 
           this.pokemonService.getPokemonDetails(poke.pokeIndex!)
         );
@@ -82,6 +73,14 @@ export class GenerationsPage implements OnInit {
     return this.favoritesService.isFavorite(pokemon.pokeIndex!);
   }
 
+getTypeBackgroundColor(types: string[] | undefined): string {
+  if (!types || types.length === 0) {
+    return '#f0f0f0'; 
+  }
+  const mainType = types[0];
+  const color = this.getTypeColor(mainType);
+  return color + '20'; 
+}
   getTypeColor(type: string): string {
     const typeColors: { [key: string]: string } = {
       normal: '#A8A878',
@@ -105,18 +104,5 @@ export class GenerationsPage implements OnInit {
     };
     
     return typeColors[type] || '#68A090';
-  }
-
-  getCurrentGeneration() {
-    return this.generations.find(gen => gen.id === this.selectedGeneration);
-  }
-
-  getTypeBackgroundColor(types: string[] | undefined): string {
-    if (!types || types.length === 0) {
-      return '#f0f0f0'; 
-    }
-    const mainType = types[0];
-    const color = this.getTypeColor(mainType);
-    return color + '20'; 
   }
 }

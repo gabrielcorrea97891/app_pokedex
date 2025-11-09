@@ -1,7 +1,10 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { PokemonService } from '../../services/pokemon.service';
-import { PokemonListItem } from '../../models/pokemon.model';
+import { FavoritesService } from '../../services/favorites.service';
+import { PokemonListItem, Pokemon } from '../../models/pokemon.model';
+import { forkJoin, Subject } from 'rxjs';
+import { takeUntil, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { IonicModule } from '@ionic/angular';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -13,18 +16,27 @@ import { FormsModule } from '@angular/forms';
   standalone: true,
   imports: [IonicModule, CommonModule, FormsModule]
 })
-export class AllPokemonPage implements OnInit {
+export class AllPokemonPage implements OnInit, OnDestroy {
   private pokemonService = inject(PokemonService);
   private router = inject(Router);
+  private favoritesService = inject(FavoritesService);
 
   pokemon: PokemonListItem[] = [];
+  filteredPokemon: PokemonListItem[] = [];
   offset: number = 0;
   limit: number = 50;
   isLoading: boolean = false;
   hasMore: boolean = true;
+  searchTerm: string = '';
+  private destroy$ = new Subject<void>();
 
   ngOnInit() {
     this.loadPokemon();
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   loadPokemon(event?: any) {
@@ -34,17 +46,45 @@ export class AllPokemonPage implements OnInit {
     
     this.pokemonService.getPokemonList(this.offset, this.limit).subscribe({
       next: (newPokemon) => {
-        this.pokemon = [...this.pokemon, ...newPokemon];
-        this.offset += this.limit;
-        this.hasMore = newPokemon.length === this.limit;
-        this.isLoading = false;
-        
-        if (event) {
-          event.target.complete();
+        if (newPokemon.length === 0) {
+          this.hasMore = false;
+          if (event) event.target.complete();
+          this.isLoading = false;
+          return;
         }
+
+        const detailRequests = newPokemon.map(poke => 
+          this.pokemonService.getPokemonDetails(poke.pokeIndex!)
+        );
+
+        forkJoin(detailRequests).subscribe({
+          next: (pokemonDetails: Pokemon[]) => {
+            const enhancedPokemon = newPokemon.map((poke, index) => ({
+              ...poke,
+              types: pokemonDetails[index].types
+            }));
+
+            this.pokemon = [...this.pokemon, ...enhancedPokemon];
+            this.filteredPokemon = [...this.pokemon]; 
+            this.offset += this.limit;
+            this.hasMore = newPokemon.length === this.limit;
+            this.isLoading = false;
+            
+            if (event) {
+              event.target.complete();
+            }
+          },
+          error: (error) => {
+            console.error('Error loading Pokémon details:', error);
+            this.isLoading = false;
+            if (event) {
+              event.target.complete();
+            }
+          }
+        });
       },
       error: (error) => {
-        console.error('Erro carregando pokémon:', error);
+        console.error('Error loading Pokémon:', error);
         this.isLoading = false;
         if (event) {
           event.target.complete();
@@ -57,8 +97,39 @@ export class AllPokemonPage implements OnInit {
     this.loadPokemon(event);
   }
 
+  onSearchChange(event: any) {
+    this.searchTerm = event.detail.value?.toLowerCase() || '';
+    this.filterPokemon();
+  }
+
+  filterPokemon() {
+    if (!this.searchTerm.trim()) {
+      this.filteredPokemon = [...this.pokemon];
+      return;
+    }
+
+    this.filteredPokemon = this.pokemon.filter(poke => 
+      poke.name.toLowerCase().includes(this.searchTerm) ||
+      poke.pokeIndex?.toString().includes(this.searchTerm) ||
+      poke.types?.some(type => type.toLowerCase().includes(this.searchTerm))
+    );
+  }
+
   viewPokemonDetails(pokemon: PokemonListItem) {
     this.router.navigate(['/pokemon-detail', pokemon.pokeIndex]);
+  }
+
+  toggleFavorite(pokemon: PokemonListItem, event: Event) {
+    event.stopPropagation();
+    const wasFavorite = this.isFavorite(pokemon);
+    this.favoritesService.toggleFavorite(pokemon.pokeIndex!);
+    
+
+    console.log(`${pokemon.name} ${wasFavorite ? 'removed from' : 'added to'} favorites`);
+  }
+
+  isFavorite(pokemon: PokemonListItem): boolean {
+    return this.favoritesService.isFavorite(pokemon.pokeIndex!);
   }
 
   getTypeColor(type: string): string {
@@ -84,5 +155,19 @@ export class AllPokemonPage implements OnInit {
     };
     
     return typeColors[type] || '#68A090';
+  }
+
+  getTypeBackgroundColor(types: string[] | undefined): string {
+    if (!types || types.length === 0) {
+      return '#f0f0f0';
+    }
+    const mainType = types[0];
+    const color = this.getTypeColor(mainType);
+    return color + '20';
+  }
+
+  clearSearch() {
+    this.searchTerm = '';
+    this.filteredPokemon = [...this.pokemon];
   }
 }

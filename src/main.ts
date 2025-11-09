@@ -19,6 +19,14 @@ const routes = [
     loadComponent: () => import('./app/pages/generations/generations.page').then(m => m.GenerationsPage)
   },
   {
+    path: 'generation1',
+    loadComponent: () => import('./app/pages/generation1/generation1.page').then(m => m.Generation1Page)
+  },
+  {
+    path: 'generation5',
+    loadComponent: () => import('./app/pages/generation5/generation5.page').then(m => m.Generation5Page)
+  },
+  {
     path: 'favorites',
     loadComponent: () => import('./app/pages/favorites/favorites.page').then(m => m.FavoritesPage)
   }

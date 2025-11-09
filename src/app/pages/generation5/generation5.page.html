@@ -1,8 +1,8 @@
 <ion-header [translucent]="true">
   <ion-toolbar color="primary">
     <ion-title>
-      <ion-icon name="list" class="ion-margin-end"></ion-icon>
-      Todos Pokemon
+      <ion-icon name="sparkles" class="ion-margin-end"></ion-icon>
+      Generacao V
     </ion-title>
   </ion-toolbar>
 </ion-header>
@@ -10,26 +10,28 @@
 <ion-content [fullscreen]="true" class="pokedex-background">
   <ion-header collapse="condense">
     <ion-toolbar color="primary">
-      <ion-title size="large">Todos os pokémon</ion-title>
+      <ion-title size="large">Generacao V</ion-title>
     </ion-toolbar>
   </ion-header>
 
-  <ion-searchbar 
-    [(ngModel)]="searchTerm"
-    (ionInput)="onSearchChange($event)"
-    (ionClear)="clearSearch()"
-    placeholder="Procure pokémon por Nome, Número ou Tipo"
-    animated="true"
-    class="search-bar"
-  ></ion-searchbar>
+  <div class="generation-info">
+    <h2>Regiao de Unova</h2>
+    <p>A quinta geracao de pokemon</p>
+    <div class="pokemon-count">Total de: {{ pokemon.length }} Pokémon</div>
+  </div>
 
-  <ion-grid>
+  <div *ngIf="isLoading" class="loading-container">
+    <ion-spinner name="crescent"></ion-spinner>
+    <p>Loading Pokémon...</p>
+  </div>
+
+  <ion-grid *ngIf="!isLoading">
     <ion-row>
       <ion-col 
         size="6" 
         size-md="4" 
         size-lg="3" 
-        *ngFor="let poke of filteredPokemon"
+        *ngFor="let poke of pokemon"
         (click)="viewPokemonDetails(poke)"
       >
         <ion-card class="pokemon-card">
@@ -43,13 +45,12 @@
             </ion-icon>
           </div>
           
-          <div class="pokemon-image-container" [style.background]="getTypeBackgroundColor(poke.types)">
+<div class="pokemon-image-container" [style.background]="getTypeBackgroundColor(poke.types)">
             <img 
               [src]="poke.image" 
               [alt]="poke.name"
               class="pokemon-image"
               loading="lazy"
-              (error)="poke.image = 'assets/icon/favicon.png'"
             >
           </div>
           
@@ -58,7 +59,6 @@
               {{ poke.name | titlecase }}
             </ion-card-title>
             
-
             <div class="pokemon-types" *ngIf="poke.types && poke.types.length > 0">
               <ion-badge 
                 *ngFor="let type of poke.types" 
@@ -74,16 +74,8 @@
     </ion-row>
   </ion-grid>
 
-  <ion-infinite-scroll (ionInfinite)="loadMore($event)" [disabled]="!hasMore || searchTerm.length > 0">
-    <ion-infinite-scroll-content
-      loadingSpinner="bubbles"
-      loadingText="Loading more Pokémon...">
-    </ion-infinite-scroll-content>
-  </ion-infinite-scroll>
-
-  <div *ngIf="filteredPokemon.length === 0 && !isLoading" class="empty-state">
-    <ion-icon name="search-outline" class="empty-icon"></ion-icon>
-    <p>Nenhum pokémon encontrado</p>
-    <p *ngIf="searchTerm" class="search-hint">Tente ajustar os termos de pesquisa</p>
+  <div *ngIf="pokemon.length === 0 && !isLoading" class="empty-state">
+    <ion-icon name="layers-outline" class="empty-icon"></ion-icon>
+    <p>No Pokémon found for this generation</p>
   </div>
 </ion-content>

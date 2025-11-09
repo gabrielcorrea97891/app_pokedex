@@ -1,5 +1,5 @@
 {
-  "name": "app_pokedex",
+  "name": "pokeApp",
   "integrations": {
     "capacitor": {}
   },

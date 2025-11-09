@@ -1,3 +1,5 @@
+// For information on how to create your own theme, please see:
+// http://ionicframework.com/docs/theming/
 // Ionic Variables and Theming. For more info, please see:
 // http://ionicframework.com/docs/theming/
 
@@ -147,6 +149,10 @@
     --ion-color-light-tint: #383a3e;
   }
 
+  /*
+   * iOS Dark Theme
+   * -------------------------------------------
+   */
 
   .ios body {
     --ion-background-color: #000000;
@@ -187,6 +193,10 @@
   }
 
 
+  /*
+   * Material Design Dark Theme
+   * -------------------------------------------
+   */
 
   .md body {
     --ion-background-color: #121212;
@@ -228,6 +238,7 @@
 }
 
 html {
-
+  /* For more information on dynamic font scaling, visit the documentation: 
+  https://ionicframework.com/docs/layout/dynamic-font-scaling */
   --ion-dynamic-font: var(--ion-default-dynamic-font);
 }

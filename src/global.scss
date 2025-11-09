@@ -1,19 +1,20 @@
-
+/* Core CSS required for Ionic components to work properly */
 @import "@ionic/angular/css/core.css";
 
-
+/* Basic CSS for apps built with Ionic */
 @import "@ionic/angular/css/normalize.css";
 @import "@ionic/angular/css/structure.css";
 @import "@ionic/angular/css/typography.css";
 @import "@ionic/angular/css/display.css";
 
+/* Optional CSS utils that can be commented out */
 @import "@ionic/angular/css/padding.css";
 @import "@ionic/angular/css/float-elements.css";
 @import "@ionic/angular/css/text-alignment.css";
 @import "@ionic/angular/css/text-transformation.css";
 @import "@ionic/angular/css/flex-utils.css";
 
-
+/* Custom Global Styles */
 * {
   box-sizing: border-box;
 }
@@ -27,6 +28,7 @@ body {
   color: var(--ion-text-color);
 }
 
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
 }
@@ -44,7 +46,6 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--ion-color-primary-shade);
 }
-
 
 .text-center {
   text-align: center;
@@ -67,7 +68,6 @@ body {
   justify-content: center;
   align-items: center;
 }
-
 
 .fade-in {
   animation: fadeIn 0.5s ease-in;

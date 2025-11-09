@@ -2,7 +2,7 @@
   <ion-toolbar color="primary">
     <ion-title>
       <ion-icon name="layers" class="ion-margin-end"></ion-icon>
-      Generacoes
+      Generations
     </ion-title>
   </ion-toolbar>
 </ion-header>
@@ -10,7 +10,7 @@
 <ion-content [fullscreen]="true" class="pokedex-background">
   <ion-header collapse="condense">
     <ion-toolbar color="primary">
-      <ion-title size="large">Generacoes</ion-title>
+      <ion-title size="large">Geracoes</ion-title>
     </ion-toolbar>
   </ion-header>
 
@@ -20,9 +20,15 @@
     </ion-segment-button>
   </ion-segment>
 
+  <div class="generation-info" *ngIf="getCurrentGeneration()">
+    <h2>Regiao de {{ getCurrentGeneration()!.region }}</h2>
+    <p>{{ getCurrentGeneration()!.name }} - {{ getCurrentGeneration()!.range }}</p>
+    <div class="pokemon-count">Total: {{ pokemon.length }} Pokémon</div>
+  </div>
+
   <div *ngIf="isLoading" class="loading-container">
     <ion-spinner name="crescent"></ion-spinner>
-    <p>Carregando Pokémon...</p>
+    <p>Loading Pokémon...</p>
   </div>
 
   <ion-grid *ngIf="!isLoading">
@@ -35,8 +41,17 @@
         (click)="viewPokemonDetails(poke)"
       >
         <ion-card class="pokemon-card">
-          <div class="pokemon-number">#{{ poke.pokeIndex | number: '3.0' }}</div>
-          <div class="pokemon-image-container">
+          <div class="card-header">
+            <div class="pokemon-number">#{{ poke.pokeIndex | number: '3.0' }}</div>
+            <ion-icon 
+              [name]="isFavorite(poke) ? 'heart' : 'heart-outline'"
+              [color]="isFavorite(poke) ? 'danger' : 'medium'"
+              (click)="toggleFavorite(poke, $event)"
+              class="favorite-icon">
+            </ion-icon>
+          </div>
+          
+          <div class="pokemon-image-container" [style.background]="getTypeBackgroundColor(poke.types)">
             <img 
               [src]="poke.image" 
               [alt]="poke.name"
@@ -49,6 +64,16 @@
             <ion-card-title class="pokemon-name">
               {{ poke.name | titlecase }}
             </ion-card-title>
+            
+            <div class="pokemon-types" *ngIf="poke.types && poke.types.length > 0">
+              <ion-badge 
+                *ngFor="let type of poke.types" 
+                [style.background]="getTypeColor(type)"
+                class="type-badge"
+              >
+                {{ type | titlecase }}
+              </ion-badge>
+            </div>
           </ion-card-header>
         </ion-card>
       </ion-col>
@@ -57,6 +82,6 @@
 
   <div *ngIf="pokemon.length === 0 && !isLoading" class="empty-state">
     <ion-icon name="layers-outline" class="empty-icon"></ion-icon>
-    <p>Nenhum pokemon encontrado</p>
+    <p>Sem pokemon nesta geracao</p>
   </div>
 </ion-content>

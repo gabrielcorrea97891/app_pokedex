@@ -1,0 +1,51 @@
+.nav-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 10px;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+}
+
+.nav-button {
+  --color: white;
+  --background: transparent;
+  margin: 0 4px;
+  
+  ion-icon {
+    font-size: 18px;
+  }
+  
+  ion-label {
+    font-size: 14px;
+    margin-left: 4px;
+  }
+}
+
+ion-toolbar {
+  --padding-start: 8px;
+  --padding-end: 8px;
+}
+
+@media (max-width: 768px) {
+  .nav-button {
+    margin: 0 2px;
+    
+    ion-label {
+      font-size: 12px;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .nav-button {
+    ion-label {
+      display: none;
+    }
+    
+    ion-icon {
+      margin: 0;
+    }
+  }
+}
