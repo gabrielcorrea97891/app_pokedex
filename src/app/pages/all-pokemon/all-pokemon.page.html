@@ -1,0 +1,89 @@
+<ion-header [translucent]="true">
+  <ion-toolbar color="primary">
+    <ion-title>
+      <ion-icon name="list" class="ion-margin-end"></ion-icon>
+      Todos Pokemon
+    </ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="pokedex-background">
+  <ion-header collapse="condense">
+    <ion-toolbar color="primary">
+      <ion-title size="large">Todos os pokémon</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <ion-searchbar 
+    [(ngModel)]="searchTerm"
+    (ionInput)="onSearchChange($event)"
+    (ionClear)="clearSearch()"
+    placeholder="Procure pokémon por Nome, Número ou Tipo"
+    animated="true"
+    class="search-bar"
+  ></ion-searchbar>
+
+  <ion-grid>
+    <ion-row>
+      <ion-col 
+        size="6" 
+        size-md="4" 
+        size-lg="3" 
+        *ngFor="let poke of filteredPokemon"
+        (click)="viewPokemonDetails(poke)"
+      >
+        <ion-card class="pokemon-card">
+          <div class="card-header">
+            <div class="pokemon-number">#{{ poke.pokeIndex | number: '3.0' }}</div>
+            <ion-icon 
+              [name]="isFavorite(poke) ? 'heart' : 'heart-outline'"
+              [color]="isFavorite(poke) ? 'danger' : 'medium'"
+              (click)="toggleFavorite(poke, $event)"
+              class="favorite-icon">
+            </ion-icon>
+          </div>
+          
+          <div class="pokemon-image-container" [style.background]="getTypeBackgroundColor(poke.types)">
+            <img 
+              [src]="poke.image" 
+              [alt]="poke.name"
+              class="pokemon-image"
+              loading="lazy"
+              (error)="poke.image = 'assets/icon/favicon.png'"
+            >
+          </div>
+          
+          <ion-card-header>
+            <ion-card-title class="pokemon-name">
+              {{ poke.name | titlecase }}
+            </ion-card-title>
+            
+
+            <div class="pokemon-types" *ngIf="poke.types && poke.types.length > 0">
+              <ion-badge 
+                *ngFor="let type of poke.types" 
+                [style.background]="getTypeColor(type)"
+                class="type-badge"
+              >
+                {{ type | titlecase }}
+              </ion-badge>
+            </div>
+          </ion-card-header>
+        </ion-card>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+
+  <ion-infinite-scroll (ionInfinite)="loadMore($event)" [disabled]="!hasMore || searchTerm.length > 0">
+    <ion-infinite-scroll-content
+      loadingSpinner="bubbles"
+      loadingText="Loading more Pokémon...">
+    </ion-infinite-scroll-content>
+  </ion-infinite-scroll>
+
+  <div *ngIf="filteredPokemon.length === 0 && !isLoading" class="empty-state">
+    <ion-icon name="search-outline" class="empty-icon"></ion-icon>
+    <p>Nenhum pokémon encontrado</p>
+    <p *ngIf="searchTerm" class="search-hint">Tente ajustar os termos de pesquisa</p>
+  </div>
+</ion-content>

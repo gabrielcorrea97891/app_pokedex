@@ -1,0 +1,85 @@
+<ion-header [translucent]="true">
+  <ion-toolbar color="primary">
+    <ion-title>
+      <ion-icon name="heart" class="ion-margin-end"></ion-icon>
+      Pokemon Favoritos
+    </ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="pokedex-background">
+  <ion-header collapse="condense">
+    <ion-toolbar color="primary">
+      <ion-title size="large">Favoritos</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+
+  <div *ngIf="isLoading" class="loading-container">
+    <ion-spinner name="crescent"></ion-spinner>
+    <p>Loading your favorites...</p>
+  </div>
+
+  <ion-grid *ngIf="!isLoading && favoritePokemon.length > 0">
+    <ion-row>
+      <ion-col 
+        size="6" 
+        size-md="4" 
+        size-lg="3" 
+        *ngFor="let poke of favoritePokemon; trackBy: trackByPokemonId"
+        (click)="viewPokemonDetails(poke)"
+      >
+        <ion-card class="pokemon-card favorite-card">
+          <div class="pokemon-number">#{{ poke.id | number: '3.0' }}</div>
+          
+
+          <ion-fab vertical="top" horizontal="end" slot="fixed" class="remove-favorite">
+            <ion-fab-button size="small" color="danger" (click)="removeFromFavorites(poke, $event)">
+              <ion-icon name="heart-dislike"></ion-icon>
+            </ion-fab-button>
+          </ion-fab>
+
+          <div class="pokemon-image-container">
+            <img 
+              [src]="poke.image" 
+              [alt]="poke.name"
+              class="pokemon-image"
+              loading="lazy"
+            >
+          </div>
+          
+          <ion-card-header>
+            <ion-card-title class="pokemon-name">
+              {{ poke.name | titlecase }}
+            </ion-card-title>
+            
+            <div class="pokemon-types">
+              <ion-badge 
+                *ngFor="let type of poke.types" 
+                [style.background]="getTypeColor(type)"
+                class="type-badge"
+              >
+                {{ type | titlecase }}
+              </ion-badge>
+            </div>
+          </ion-card-header>
+        </ion-card>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+
+  <div *ngIf="favoritePokemon.length === 0 && !isLoading" class="empty-state">
+    <ion-icon name="heart-dislike" class="empty-icon"></ion-icon>
+    <h3>Nenhum pokemon favorito</h3>
+    <p>Comece adicionando pokemon favoritos da lista da pokedex.</p>
+    <ion-button 
+      fill="solid" 
+      color="primary" 
+      routerLink="/tabs/all-pokemon"
+      class="browse-button"
+    >
+      <ion-icon name="list" slot="start"></ion-icon>
+      Pesquisar pokemon
+    </ion-button>
+  </div>
+</ion-content>

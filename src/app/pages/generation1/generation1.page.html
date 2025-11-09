@@ -1,0 +1,84 @@
+<ion-header [translucent]="true">
+  <ion-toolbar color="primary">
+    <ion-title>
+      <ion-icon name="sparkles" class="ion-margin-end"></ion-icon>
+      GeneracaoI
+    </ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="pokedex-background">
+  <ion-header collapse="condense">
+    <ion-toolbar color="primary">
+      <ion-title size="large">Generacao I</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+
+  <div class="generation-info">
+    <h2>Regiao de Kanto</h2>
+    <p>Os 151 pokemon originais</p>
+    <div class="pokemon-count">Total de: {{ pokemon.length }} Pokémon</div>
+  </div>
+
+
+  <div *ngIf="isLoading" class="loading-container">
+    <ion-spinner name="crescent"></ion-spinner>
+    <p>Loading Pokémon...</p>
+  </div>
+
+
+  <ion-grid *ngIf="!isLoading">
+    <ion-row>
+      <ion-col 
+        size="6" 
+        size-md="4" 
+        size-lg="3" 
+        *ngFor="let poke of pokemon"
+        (click)="viewPokemonDetails(poke)"
+      >
+        <ion-card class="pokemon-card">
+          <div class="card-header">
+            <div class="pokemon-number">#{{ poke.pokeIndex | number: '3.0' }}</div>
+            <ion-icon 
+              [name]="isFavorite(poke) ? 'heart' : 'heart-outline'"
+              [color]="isFavorite(poke) ? 'danger' : 'medium'"
+              (click)="toggleFavorite(poke, $event)"
+              class="favorite-icon">
+            </ion-icon>
+          </div>
+          
+<div class="pokemon-image-container" [style.background]="getTypeBackgroundColor(poke.types)">
+            <img 
+              [src]="poke.image" 
+              [alt]="poke.name"
+              class="pokemon-image"
+              loading="lazy"
+            >
+          </div>
+          
+          <ion-card-header>
+            <ion-card-title class="pokemon-name">
+              {{ poke.name | titlecase }}
+            </ion-card-title>
+
+            <div class="pokemon-types" *ngIf="poke.types && poke.types.length > 0">
+              <ion-badge 
+                *ngFor="let type of poke.types" 
+                [style.background]="getTypeColor(type)"
+                class="type-badge"
+              >
+                {{ type | titlecase }}
+              </ion-badge>
+            </div>
+          </ion-card-header>
+        </ion-card>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+
+  <div *ngIf="pokemon.length === 0 && !isLoading" class="empty-state">
+    <ion-icon name="layers-outline" class="empty-icon"></ion-icon>
+    <p>No Pokémon found for this generation</p>
+  </div>
+</ion-content>

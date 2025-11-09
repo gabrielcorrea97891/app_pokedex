@@ -1,3 +1,27 @@
 <ion-app>
+  <ion-header *ngIf="showHeader">
+    <ion-toolbar color="primary">
+      <ion-title>Pokédex</ion-title>
+      <ion-buttons slot="start">
+        <ion-button [routerLink]="['/']" routerDirection="root" class="nav-button">
+          <ion-icon name="list" slot="icon-only"></ion-icon>
+          <ion-label class="nav-label">All</ion-label>
+        </ion-button>
+      </ion-buttons>
+      <ion-buttons slot="end">
+        <ion-button [routerLink]="['/generations']" routerDirection="forward" class="nav-button">
+          <ion-icon name="layers" slot="icon-only"></ion-icon>
+          <ion-label class="nav-label">Generations</ion-label>
+        </ion-button>
+        <ion-button [routerLink]="['/favorites']" routerDirection="forward" class="nav-button">
+          <ion-icon name="heart" slot="icon-only"></ion-icon>
+          <ion-label class="nav-label">Favorites</ion-label>
+          <ion-badge *ngIf="favoriteCount > 0" color="danger" class="favorite-badge">
+            {{ favoriteCount }}
+          </ion-badge>
+        </ion-button>
+      </ion-buttons>
+    </ion-toolbar>
+  </ion-header>
   <ion-router-outlet></ion-router-outlet>
 </ion-app>
